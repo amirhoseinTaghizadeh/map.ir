@@ -1,0 +1,41 @@
+version: "3.7"
+services:
+    db:
+        image: postgres:13
+        container_name: map-db
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: mypassword
+            POSTGRES_DB: mydb
+        volumes:
+            - ./docker/pstg/init.sql:/docker-entrypoint-initdb.d/init.sql
+    app:
+        build:
+            args:
+                user: map
+                uid: 1000
+            context: ./
+            dockerfile: docker/Dockerfile
+        image: map-laravel-image
+        container_name: map-laravel-app
+        depends_on:
+           - db
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+    nginx:
+        image: nginx:alpine
+        container_name: map-webserver
+        restart: unless-stopped
+        depends_on:
+            - app
+        ports:
+            - "8000:80"
+        volumes:
+            - ./:/var/www
+            - ./docker/nginx:/etc/nginx/conf.d/
+
+
+
